@@ -1,0 +1,32 @@
+use std::io::Write;
+use std::net::{Shutdown, TcpStream};
+use std::thread::sleep;
+use std::time::Duration;
+
+const VSOCK_PORT: u32 = 5000;  // Change this to any desired VSOCK port number
+
+fn main() {
+    loop {
+        // Connect to the VSOCK interface
+        match TcpStream::connect(format!("vsock://{}:{}", 2, VSOCK_PORT)) {
+            Ok(mut stream) => {
+                println!("Connected to VSOCK");
+
+                // Send "Hello World" message
+                let message = "Hello World";
+                match stream.write_all(message.as_bytes()) {
+                    Ok(_) => println!("Sent: {}", message),
+                    Err(e) => eprintln!("Failed to send message: {}", e),
+                }
+
+                // Shutdown the connection gracefully
+                let _ = stream.shutdown(Shutdown::Both);
+            }
+            Err(e) => eprintln!("Failed to connect to VSOCK: {}", e),
+        }
+
+        // Wait for a minute before sending the next message
+        sleep(Duration::from_secs(60));
+    }
+}
+
